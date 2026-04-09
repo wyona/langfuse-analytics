@@ -103,7 +103,7 @@ def get_data_from_langfuse(max_pages: int):
             #print(f"Trace: {trace}")
             user_id = getattr(trace, "user_id", None)
             if not user_id:  # skips None, empty string, etc.
-                log.debug(f"Skip {getattr(trace, "id")} trace with empty user_id (Tags: {trace.tags})")
+                log.debug(f"Skip {getattr(trace, 'id')} trace with empty user_id (Tags: {trace.tags})")
                 skipped_traces += 1
                 continue
 
