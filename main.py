@@ -39,7 +39,9 @@ def extract_some_metadata(df: pd.DataFrame, userIdColumnName: str, conversationI
         return 0
 
     if dateColumnName in df.columns:
-        df.loc[:, dateColumnName] = pd.to_datetime(df[dateColumnName], format="mixed")
+        # TODO: Check why .loc does (not) work
+        #df.loc[:, dateColumnName] = pd.to_datetime(df[dateColumnName], format="mixed")
+        df[dateColumnName] = pd.to_datetime(df[dateColumnName], format="mixed", utc=True)
         oldest_date = df[dateColumnName].min().date()
         youngest_date = df[dateColumnName].max().date()
         log.debug(f"Oldest date: {oldest_date}")
