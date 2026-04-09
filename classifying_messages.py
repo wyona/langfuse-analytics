@@ -8,7 +8,7 @@ logging.basicConfig(format="%(name)s - %(levelname)s - %(message)s", level=loggi
 log = logging.getLogger(__name__)
 
 load_dotenv()
-openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY", "Replace_by_your_OpenAI_key_when_not_configured_in_env_file")
 client = OpenAI(api_key=openai_api_key)
 
 litellm_api_key = os.getenv("LITELLM_API_KEY")
