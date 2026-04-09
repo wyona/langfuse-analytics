@@ -200,7 +200,7 @@ if True:
     if ANALYZE_LANGFUSE:
         conversations_and_messages_per_day(lf_df_small, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_CONVERSATION)
 
-if False:
+if True:
     # Pick the user UUID you want to analyze
     #user_id = "68c93b60279c6a9faf4683f3" # 441 messages and 11 conversations during the period Sept 11 to Oct 20
     #user_id = "68c3d7a0599baa89eb48bc00" # 273 messages and 21 conversations during the period Sept 11 to Oct 20
