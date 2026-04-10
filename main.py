@@ -184,16 +184,24 @@ if ANALYZE_LANGFUSE:
 
 # TODO: Transform excel_df or lf_df_small into a source independent DataFrame
 
-# Todo: Ich muss noch hier weniger brutforce machen und ich muss die datei so ändern damit diese beim terminal fragt welche fkt. herausgegeben werden, 
-
+# Pick the user UUID you want to analyze
+#user_id = "68c93b60279c6a9faf4683f3" # 441 messages and 11 conversations during the period Sept 11 to Oct 20
+#user_id = "68c3d7a0599baa89eb48bc00" # 273 messages and 21 conversations during the period Sept 11 to Oct 20
+#user_id = "68c3d7b1f2978f6b2a432235" # 257 messages and 23 conversations during the period Sept 11 to Oct 20
+#user_id = "68c3d7ec41aa5e1af33e8d90" # 218 messages and 40 conversations during the period Sept 11 to Oct 20
+#user_id = "68da33f9a8926c6d7d2e6009" # 195 messages and 14 conversations during the period Sept 11 to Oct 20
+#user_id = "68c828cf66b3bfa761af5b77" # 188 messages and 47 conversations during the period Sept 11 to Oct 20
+user_id = "691ae6fb9653e3d85b29067f" # Michael
+#user_id = "68c3d813f2978f6b2a432e6f" # TODO
+#user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
 
 #Having the options to choose which function I want to choose. 
-print("\nChoose analysis function:  " )
-print("1 - Ranking by conversations and messages by user")
+print("\nChoose analysis function(s):\n" )
+print("1 - Ranking of users by number of conversations and messages sent")
 print("2 - Conversations and messages per day")
-print("3 - Conversations and messages of one user per day")
-print("4 - Classify message by LLM")
-print("5 - Show display classification")
+print(f"3 - Conversations and messages of user '{user_id}' per day")
+print("4 - Classify user messages by LLM")
+print("5 - Show classification ranking by message volume\n")
 choice = input("Enter your Choice from 1 to 5: ").strip()
 
 if choice == "1": 
@@ -204,32 +212,17 @@ if choice == "1":
 
     if ANALYZE_LANGFUSE:
         ranking_by_conversations_and_messages_by_user(lf_df_small, top_k, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION)
-
-
-if choice == "2": 
+elif choice == "2":
     if ANALYZE_EXCEL:
         conversations_and_messages_per_day(excel_df)
     if ANALYZE_LANGFUSE:
         conversations_and_messages_per_day(lf_df_small, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_CONVERSATION)
-
-if choice == "3": 
-    # Pick the user UUID you want to analyze
-    #user_id = "68c93b60279c6a9faf4683f3" # 441 messages and 11 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c3d7a0599baa89eb48bc00" # 273 messages and 21 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c3d7b1f2978f6b2a432235" # 257 messages and 23 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c3d7ec41aa5e1af33e8d90" # 218 messages and 40 conversations during the period Sept 11 to Oct 20
-    #user_id = "68da33f9a8926c6d7d2e6009" # 195 messages and 14 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c828cf66b3bfa761af5b77" # 188 messages and 47 conversations during the period Sept 11 to Oct 20
-    user_id = "691ae6fb9653e3d85b29067f" # Michael
-    #user_id = "68c3d813f2978f6b2a432e6f" # TODO
-    #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
-
+elif choice == "3":
     if ANALYZE_EXCEL:
         conversations_and_messages_of_user_per_day(excel_df, user_id)
     if ANALYZE_LANGFUSE:
         conversations_and_messages_of_user_per_day(lf_df_small, user_id, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION, LF_COLUMN_NAME_MESSAGE)
-
-if choice == "4": 
+elif choice == "4":
     if ANALYZE_EXCEL:
         # batch_size = 10
         batch_size = 3
@@ -238,8 +231,7 @@ if choice == "4":
         #batch_size = 3
         batch_size = None
         classify_messages_by_LLM(lf_df_small, None, pickle_file_name, batch_size, LF_COLUMN_NAME_MESSAGE)
-
-if choice == "5": 
+elif choice == "5":
     #excluded_user_ids = ["68c93b60279c6a9faf4683f3", "68c3d7a0599baa89eb48bc00", "68c3d7b1f2978f6b2a432235", "68c3d7ec41aa5e1af33e8d90", "68da33f9a8926c6d7d2e6009", "68c828cf66b3bfa761af5b77"]
     #excluded_user_ids = ["68c93b60279c6a9faf4683f3"]
     excluded_user_ids = ["68c3d92641aa5e1af33e9374"] # Test User of Lena
@@ -250,9 +242,8 @@ if choice == "5":
     if ANALYZE_LANGFUSE:
         pickle_df = pd.read_pickle(pickle_file_name)
         display_classification_results(pickle_df, excluded_user_ids, LF_COLUMN_NAME_USER_ID)
-
 else: 
-    log.error("Invalid choice. Please Enter a number between 1 to 5")
+    log.error("Invalid choice, please make sure to enter a number between 1 to 5!")
 
 
 
