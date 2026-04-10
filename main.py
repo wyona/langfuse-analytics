@@ -192,7 +192,7 @@ if ANALYZE_LANGFUSE:
 #user_id = "68da33f9a8926c6d7d2e6009" # 195 messages and 14 conversations during the period Sept 11 to Oct 20
 #user_id = "68c828cf66b3bfa761af5b77" # 188 messages and 47 conversations during the period Sept 11 to Oct 20
 user_id = "691ae6fb9653e3d85b29067f" # Michael
-#user_id = "68c3d813f2978f6b2a432e6f" # TODO
+#user_id = "68c3d813f2978f6b2a432e6f" # TODO: Which user is this?
 #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
 
 #Having the options to choose which function I want to choose. 
@@ -244,66 +244,3 @@ elif choice == "5":
         display_classification_results(pickle_df, excluded_user_ids, LF_COLUMN_NAME_USER_ID)
 else: 
     log.error("Invalid choice, please make sure to enter a number between 1 to 5!")
-
-
-
-
-
-
-
-# Run various functions to analyze conversations and messages
-"""
-if True:
-    top_k = 20
-    #top_k = number_of_unique_users
-    if ANALYZE_EXCEL:
-        ranking_by_conversations_and_messages_by_user(excel_df, top_k)
-
-    if ANALYZE_LANGFUSE:
-        ranking_by_conversations_and_messages_by_user(lf_df_small, top_k, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION)
-
-if True:
-    if ANALYZE_EXCEL:
-        conversations_and_messages_per_day(excel_df)
-    if ANALYZE_LANGFUSE:
-        conversations_and_messages_per_day(lf_df_small, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_CONVERSATION)
-"""
-"""
-
-if True:
-    # Pick the user UUID you want to analyze
-    #user_id = "68c93b60279c6a9faf4683f3" # 441 messages and 11 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c3d7a0599baa89eb48bc00" # 273 messages and 21 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c3d7b1f2978f6b2a432235" # 257 messages and 23 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c3d7ec41aa5e1af33e8d90" # 218 messages and 40 conversations during the period Sept 11 to Oct 20
-    #user_id = "68da33f9a8926c6d7d2e6009" # 195 messages and 14 conversations during the period Sept 11 to Oct 20
-    #user_id = "68c828cf66b3bfa761af5b77" # 188 messages and 47 conversations during the period Sept 11 to Oct 20
-    user_id = "691ae6fb9653e3d85b29067f" # Michael
-    #user_id = "68c3d813f2978f6b2a432e6f" # 
-    #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
-    if ANALYZE_EXCEL:
-        conversations_and_messages_of_user_per_day(excel_df, user_id)
-    if ANALYZE_LANGFUSE:
-        conversations_and_messages_of_user_per_day(lf_df_small, user_id, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION, LF_COLUMN_NAME_MESSAGE)
-
-if False:
-    if ANALYZE_EXCEL:
-        # batch_size = 10
-        batch_size = 3
-        classify_messages_by_LLM(excel_df, messages_log_file, None, batch_size)
-    if ANALYZE_LANGFUSE:
-        #batch_size = 3
-        batch_size = None
-        classify_messages_by_LLM(lf_df_small, None, pickle_file_name, batch_size, LF_COLUMN_NAME_MESSAGE)
-
-if False:
-    #excluded_user_ids = ["68c93b60279c6a9faf4683f3", "68c3d7a0599baa89eb48bc00", "68c3d7b1f2978f6b2a432235", "68c3d7ec41aa5e1af33e8d90", "68da33f9a8926c6d7d2e6009", "68c828cf66b3bfa761af5b77"]
-    #excluded_user_ids = ["68c93b60279c6a9faf4683f3"]
-    excluded_user_ids = ["68c3d92641aa5e1af33e9374"] # Test User of Lena
-    if ANALYZE_EXCEL:
-        display_classification_results(excel_df, excluded_user_ids)
-        #display_classification_results(excel_df)
-    if ANALYZE_LANGFUSE:
-        pickle_df = pd.read_pickle(pickle_file_name)
-        display_classification_results(pickle_df, excluded_user_ids, LF_COLUMN_NAME_USER_ID)
-"""
