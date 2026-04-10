@@ -195,7 +195,7 @@ user_id = "691ae6fb9653e3d85b29067f" # Michael
 #user_id = "68c3d813f2978f6b2a432e6f" # TODO: Which user is this?
 #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
 
-#Having the options to choose which function I want to choose. 
+# Having the options to choose which function I want to choose.
 print("\nChoose analysis function(s):\n" )
 print("1 - Ranking of users by number of conversations and messages sent")
 print("2 - Conversations and messages per day")
