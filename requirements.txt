@@ -3,4 +3,4 @@ openpyxl
 matplotlib
 openai
 python-dotenv
-langfuse
+langfuse==3.10.0
