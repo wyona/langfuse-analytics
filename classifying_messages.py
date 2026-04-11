@@ -11,8 +11,8 @@ load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY", "Replace_by_your_OpenAI_key_when_not_configured_in_env_file")
 client = OpenAI(api_key=openai_api_key)
 
-litellm_api_key = os.getenv("LITELLM_API_KEY")
-litellm_api_base = os.getenv("LITELLM_API_BASE")
+litellm_api_key = os.getenv("LITELLM_API_KEY", "Replace_by_your_LiteLLM_key_when_not_configured_in_env_file")
+litellm_api_base = os.getenv("LITELLM_API_BASE", "Replace_by_your_LiteLLM_api_base_when_not_configured_in_env_file")
 #client = OpenAI(api_key=litellm_api_key, base_url=litellm_api_base)
 
 NO_USER_MESSAGE_AVAILABLE = "No user message available"

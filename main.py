@@ -68,11 +68,11 @@ def get_data_from_langfuse(max_pages: int):
     :return: Dataframe containing conversations and messages
     """
     load_dotenv()
-    lf_public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
+    lf_public_key = os.getenv("LANGFUSE_PUBLIC_KEY", "Replace_by_your_Langfuse_public_key_when_not_configured_in_env_file")
     log.debug(f"LF_public_key: {lf_public_key}")
-    lf_secret_key = os.getenv("LANGFUSE_SECRET_KEY")
+    lf_secret_key = os.getenv("LANGFUSE_SECRET_KEY", "Replace_by_your_Langfuse_secret_key_when_not_configured_in_env_file")
     log.debug(f"LF_secret_key: {lf_secret_key}")
-    lf_host = os.getenv("LANGFUSE_HOST")
+    lf_host = os.getenv("LANGFUSE_HOST", "Replace_by_your_Langfuse_host_when_not_configured_in_env_file")
     log.info(f"LF_host: {lf_host}")
     langfuse = Langfuse(
         public_key=lf_public_key,
@@ -80,6 +80,8 @@ def get_data_from_langfuse(max_pages: int):
         host=lf_host,
         timeout=20,
     )
+    # DEBUG Langfuse configuration
+    #print(dir(langfuse))
     log.info(f"Get data from Langfuse: {lf_host} (Max pages: {max_pages}) ...")
 
     records = []
@@ -164,8 +166,8 @@ if ANALYZE_EXCEL:
 
 if ANALYZE_LANGFUSE:
     log.info("\n\n")
-    if False:
-        max_pages = 10
+    if True:
+        max_pages = 1
         #max_pages = 200  # stop after 200 pages
         lf_df = get_data_from_langfuse(max_pages)
     else:
