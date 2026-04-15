@@ -1,3 +1,4 @@
+import glob
 import logging
 import pandas as pd
 import os
@@ -23,6 +24,7 @@ LF_COLUMN_NAME_MESSAGE = "input.messages"
 LF_COLUMN_NAME_CONVERSATION = "sessionId"
 
 TRACES_FILE = "langfuse_traces.csv"
+TRACES_FILE_GLOB = "langfuse_traces_*.csv"
 
 def extract_some_metadata(df: pd.DataFrame, userIdColumnName: str, conversationIdColumnName: str, dateColumnName: str):
     """
@@ -60,6 +62,30 @@ def extract_some_metadata(df: pd.DataFrame, userIdColumnName: str, conversationI
     log.info(f"Number of unique users: {unique_users}")
 
     return unique_users
+
+def find_latest_traces_file():
+    """
+    Find the most recent langfuse traces dump file.
+    Files are named: langfuse_traces_YYYY-MM-DD_to_YYYY-MM-DD.csv
+    Returns (file_path, newest_timestamp) or (None, None) if no file is found.
+    """
+    files = glob.glob(TRACES_FILE_GLOB)
+    if not files:
+        return None, None
+
+    def get_to_date(f):
+        base = os.path.basename(f).replace(".csv", "")
+        parts = base.split("_to_")
+        return parts[-1] if len(parts) >= 2 else ""
+
+    files.sort(key=get_to_date, reverse=True)
+    latest_file = files[0]
+
+    df = pd.read_csv(latest_file, usecols=[LF_COLUMN_NAME_DATE])
+    df[LF_COLUMN_NAME_DATE] = pd.to_datetime(df[LF_COLUMN_NAME_DATE], format="mixed", utc=True)
+    newest_ts = df[LF_COLUMN_NAME_DATE].max()
+    log.info(f"Found existing traces file '{latest_file}' (newest trace: {newest_ts})")
+    return latest_file, newest_ts
 
 def get_data_from_langfuse(max_pages: int):
     """
@@ -166,12 +192,26 @@ if ANALYZE_EXCEL:
 
 if ANALYZE_LANGFUSE:
     log.info("\n\n")
-    if True:
+    latest_file, newest_timestamp = find_latest_traces_file()
+    FETCH_FROM_LANGFUSE = True
+    if FETCH_FROM_LANGFUSE:
         max_pages = 1
         #max_pages = 200  # stop after 200 pages
-        lf_df = get_data_from_langfuse(max_pages)
+        if newest_timestamp is not None:
+            log.info(f"Incremental fetch: only retrieving traces newer than {newest_timestamp} ...")
+            lf_df = get_data_from_langfuse(max_pages)
+            # lf_df = get_data_from_langfuse(max_pages, from_timestamp=newest_timestamp)
+        else:
+            log.info("No existing traces file found, fetching all traces from Langfuse ...")
+            lf_df = get_data_from_langfuse(max_pages)
     else:
-        lf_df = pd.read_csv(TRACES_FILE )
+        latest_file, _ = find_latest_traces_file()
+        if latest_file:
+            log.info(f"Reading traces from '{latest_file}' ...")
+            lf_df = pd.read_csv(latest_file)
+        else:
+            log.error("No traces file found! Set FETCH_FROM_LANGFUSE = True to fetch from Langfuse.")
+            exit(1)
 
     lf_df_small = reduce_data_frame(lf_df)
 
