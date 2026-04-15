@@ -23,8 +23,12 @@ LF_COLUMN_NAME_DATE = "timestamp"
 LF_COLUMN_NAME_MESSAGE = "input.messages"
 LF_COLUMN_NAME_CONVERSATION = "sessionId"
 
-TRACES_FILE = "langfuse_traces.csv"
 TRACES_FILE_GLOB = "langfuse_traces_*.csv"
+
+load_dotenv()
+lf_public_key = os.getenv("LANGFUSE_PUBLIC_KEY", "Replace_by_your_Langfuse_public_key_when_not_configured_in_env_file")
+lf_secret_key = os.getenv("LANGFUSE_SECRET_KEY", "Replace_by_your_Langfuse_secret_key_when_not_configured_in_env_file")
+lf_host = os.getenv("LANGFUSE_HOST", "Replace_by_your_Langfuse_host_when_not_configured_in_env_file")
 
 def extract_some_metadata(df: pd.DataFrame, userIdColumnName: str, conversationIdColumnName: str, dateColumnName: str):
     """
@@ -44,8 +48,8 @@ def extract_some_metadata(df: pd.DataFrame, userIdColumnName: str, conversationI
         # TODO: Check why .loc does (not) work
         #df.loc[:, dateColumnName] = pd.to_datetime(df[dateColumnName], format="mixed")
         df[dateColumnName] = pd.to_datetime(df[dateColumnName], format="mixed", utc=True)
-        oldest_date = df[dateColumnName].min().date()
-        youngest_date = df[dateColumnName].max().date()
+        oldest_date = df[dateColumnName].min()
+        youngest_date = df[dateColumnName].max()
         log.debug(f"Oldest date: {oldest_date}")
         log.debug(f"Youngest date: {youngest_date}")
         log.info(f"\n\nExtracting some metadata for the time period {oldest_date} to {youngest_date} ...\n")
@@ -87,18 +91,15 @@ def find_latest_traces_file():
     log.info(f"Found existing traces file '{latest_file}' (newest trace: {newest_ts})")
     return latest_file, newest_ts
 
-def get_data_from_langfuse(max_pages: int):
+def get_data_from_langfuse(max_pages: int, from_timestamp=None):
     """
     Get data from Langfuse
     :param max_pages: Maximum number of pages to fetch
+    :param from_timestamp: If provided, only fetch traces newer than this timestamp (incremental update)
     :return: Dataframe containing conversations and messages
     """
-    load_dotenv()
-    lf_public_key = os.getenv("LANGFUSE_PUBLIC_KEY", "Replace_by_your_Langfuse_public_key_when_not_configured_in_env_file")
     log.debug(f"LF_public_key: {lf_public_key}")
-    lf_secret_key = os.getenv("LANGFUSE_SECRET_KEY", "Replace_by_your_Langfuse_secret_key_when_not_configured_in_env_file")
     log.debug(f"LF_secret_key: {lf_secret_key}")
-    lf_host = os.getenv("LANGFUSE_HOST", "Replace_by_your_Langfuse_host_when_not_configured_in_env_file")
     log.info(f"LF_host: {lf_host}")
     langfuse = Langfuse(
         public_key=lf_public_key,
@@ -108,7 +109,10 @@ def get_data_from_langfuse(max_pages: int):
     )
     # DEBUG Langfuse configuration
     #print(dir(langfuse))
-    log.info(f"Get data from Langfuse: {lf_host} (Max pages: {max_pages}) ...")
+    if from_timestamp is not None:
+        log.info(f"Get data from Langfuse: {lf_host} (Max pages: {max_pages}, from: {from_timestamp}) ...")
+    else:
+        log.info(f"Get data from Langfuse: {lf_host} (Max pages: {max_pages}) ...")
 
     records = []
     page = 1
@@ -123,9 +127,11 @@ def get_data_from_langfuse(max_pages: int):
         else:
             log.info(f"Retrieve page {page} (Max {limit_per_page} traces per page) ...")
 
+        #response = langfuse.api.trace.list(limit=limit_per_page, page=page)
         response = langfuse.api.trace.list(limit=limit_per_page, page=page)
+        #response = langfuse.trace.list(limit=limit_per_page, page=page, from_timestamp=from_timestamp)
         # One can filter by tags, but excluding traces with certain tags / negative tagging is not possible
-        #response = langfuse.api.trace.list(tags="litellm-internal-health-check", limit=limit_per_page, page=page)
+        #response = langfuse_api.trace.list(tags="litellm-internal-health-check", limit=limit_per_page, page=page)
         if not response.data:
             break
 
@@ -150,14 +156,43 @@ def get_data_from_langfuse(max_pages: int):
             break
 
     log.info(f"Number of skipped traces (empty '{LF_COLUMN_NAME_USER_ID}'): {skipped_traces}")
-    log.info(f"Number of traces with non-empty '{LF_COLUMN_NAME_USER_ID}' retrieved: {len(records)}")
+    log.info(f"Number of traces with non-empty '{LF_COLUMN_NAME_USER_ID}': {len(records)}")
 
     if not records:
-        log.warning("No traces with non-empty '{LF_COLUMN_NAME_USER_ID}' retrieved!")
-        lf_df = pd.DataFrame(columns=["id", LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION])
+        log.warning(f"No non-empty traces retrieved!")
+        if from_timestamp is not None:
+            latest_file, _ = find_latest_traces_file()
+            if latest_file:
+                log.info(f"Returning existing data from '{latest_file}'.")
+                return pd.read_csv(latest_file)
+        return pd.DataFrame(columns=["id", LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION])
+
+    new_df = pd.json_normalize(records)
+
+    if from_timestamp is not None:
+        old_file, _ = find_latest_traces_file()
+        if old_file:
+            existing_df = pd.read_csv(old_file)
+            lf_df = pd.concat([existing_df, new_df], ignore_index=True).drop_duplicates(subset=["id"])
+            log.info(f"Merged {len(new_df)} from Langfuse retrieved traces with {len(existing_df)} existing -> {len(lf_df)} total")
+        else:
+            lf_df = new_df
+            old_file = None
     else:
-        lf_df = pd.json_normalize(records)
-        lf_df.to_csv(TRACES_FILE , index=False)
+        lf_df = new_df
+        old_file = None
+
+    dates = pd.to_datetime(lf_df[LF_COLUMN_NAME_DATE], format="mixed", utc=True)
+    oldest_date = dates.min().date()
+    newest_date = dates.max().date()
+    filename = f"langfuse_traces_{oldest_date}_to_{newest_date}.csv"
+    lf_df.to_csv(filename, index=False)
+    log.info(f"Saved {len(lf_df)} traces to '{filename}'")
+
+    if old_file and old_file != filename:
+        os.remove(old_file)
+        log.info(f"Removed superseded file '{old_file}'")
+
     print(f"DataFrame Shape: {lf_df.shape}")
     print(lf_df.head())
 
@@ -199,15 +234,13 @@ if ANALYZE_LANGFUSE:
         #max_pages = 200  # stop after 200 pages
         if newest_timestamp is not None:
             log.info(f"Incremental fetch: only retrieving traces newer than {newest_timestamp} ...")
-            lf_df = get_data_from_langfuse(max_pages)
-            # lf_df = get_data_from_langfuse(max_pages, from_timestamp=newest_timestamp)
+            lf_df = get_data_from_langfuse(max_pages, from_timestamp=newest_timestamp)
         else:
             log.info("No existing traces file found, fetching all traces from Langfuse ...")
             lf_df = get_data_from_langfuse(max_pages)
     else:
-        latest_file, _ = find_latest_traces_file()
         if latest_file:
-            log.info(f"Reading traces from '{latest_file}' ...")
+            log.info(f"Reading traces from '{latest_file}' only, but not from Langfuse host {lf_host} ...")
             lf_df = pd.read_csv(latest_file)
         else:
             log.error("No traces file found! Set FETCH_FROM_LANGFUSE = True to fetch from Langfuse.")
@@ -233,6 +266,7 @@ if ANALYZE_LANGFUSE:
 #user_id = "68c3d7ec41aa5e1af33e8d90" # 218 messages and 40 conversations during the period Sept 11 to Oct 20
 #user_id = "68da33f9a8926c6d7d2e6009" # 195 messages and 14 conversations during the period Sept 11 to Oct 20
 #user_id = "68c828cf66b3bfa761af5b77" # 188 messages and 47 conversations during the period Sept 11 to Oct 20
+# Wie viele Credits bekommt man als Entschädigung für ein Tutotat?
 user_id = "691ae6fb9653e3d85b29067f" # Michael
 #user_id = "68c3d813f2978f6b2a432e6f" # TODO: Which user is this?
 #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
