@@ -66,17 +66,15 @@ def conversations_and_messages_of_user_per_day(df: pd.DataFrame, user_id: str, d
     # Filter for this user
     user_df = df[df[userIdColumnName] == user_id]
 
-    #for index, row in user_df.iterrows():
-    #    print(f"Row: {row.to_dict()}")
-
-    user_messages = user_df[messageColumnName].values
-    for msg in user_messages:
-        print(f"MESSAGE:\n {msg}")
+    for _, row in user_df.iterrows():
+        msg = row[messageColumnName]
+        date = row[dateColumnName]
+        print(f"\nMESSAGE ({date}):\n{msg}")
 
     # Count messages per day
+    # messages_per_day = user_df.groupby(DATE_ONLY).size()
     # TODO:  Consider to divide by 2, because the user request and the bot response each generate a trace / message
-    messages_per_day = user_df.groupby(DATE_ONLY).size()
-    # messages_per_day = user_df.groupby(DATE_ONLY).size() / 2
+    messages_per_day = user_df.groupby(DATE_ONLY).size() / 2
 
     # Count unique conversations per day
     conversations_per_day = user_df.groupby(DATE_ONLY)[conversationIdColumnName].nunique()
