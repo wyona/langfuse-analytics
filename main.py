@@ -228,7 +228,7 @@ if ANALYZE_EXCEL:
 if ANALYZE_LANGFUSE:
     log.info("\n\n")
     latest_file, newest_timestamp = find_latest_traces_file()
-    FETCH_FROM_LANGFUSE = False
+    FETCH_FROM_LANGFUSE = True
     if FETCH_FROM_LANGFUSE:
         max_pages = 1
         #max_pages = 200  # stop after 200 pages
