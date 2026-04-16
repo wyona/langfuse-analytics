@@ -228,7 +228,7 @@ if ANALYZE_EXCEL:
 if ANALYZE_LANGFUSE:
     log.info("\n\n")
     latest_file, newest_timestamp = find_latest_traces_file()
-    FETCH_FROM_LANGFUSE = True
+    FETCH_FROM_LANGFUSE = False
     if FETCH_FROM_LANGFUSE:
         max_pages = 1
         #max_pages = 200  # stop after 200 pages
@@ -270,52 +270,60 @@ user_id = "691ae6fb9653e3d85b29067f" # Michael
 #user_id = "68c3d813f2978f6b2a432e6f" # TODO: Which user is this?
 #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
 
-# Having the options to choose which function I want to choose.
-print("\nChoose analysis function(s):\n" )
+print("\nChoose analysis function(s):\n")
 print("1 - Ranking of users by number of conversations and messages sent")
 print("2 - Conversations and messages per day")
 print(f"3 - Conversations and messages of user '{user_id}' per day")
 print("4 - Classify user messages by LLM")
-print("5 - Show classification ranking by message volume\n")
-choice = input("Enter your Choice from 1 to 5: ").strip()
+print("5 - Show classification ranking by message volume")
+print("\nEnter one or more numbers separated by commas (e.g. 1,3,5), or 'all' to run everything.\n")
+raw_input = input("Your choice: ").strip().lower()
 
-if choice == "1": 
-    top_k = 20
-    #top_k = number_of_unique_users
-    if ANALYZE_EXCEL:
-        ranking_by_conversations_and_messages_by_user(excel_df, top_k)
+valid_choices = {"1", "2", "3", "4", "5"}
+if raw_input == "all":
+    choices = valid_choices
+else:
+    choices = {c.strip() for c in raw_input.split(",")}
+    invalid = choices - valid_choices
+    if invalid:
+        log.error(f"Invalid choice(s): {', '.join(sorted(invalid))}. Please enter numbers between 1 and 5.")
+        exit(1)
 
-    if ANALYZE_LANGFUSE:
-        ranking_by_conversations_and_messages_by_user(lf_df_small, top_k, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION)
-elif choice == "2":
-    if ANALYZE_EXCEL:
-        conversations_and_messages_per_day(excel_df)
-    if ANALYZE_LANGFUSE:
-        conversations_and_messages_per_day(lf_df_small, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_CONVERSATION)
-elif choice == "3":
-    if ANALYZE_EXCEL:
-        conversations_and_messages_of_user_per_day(excel_df, user_id)
-    if ANALYZE_LANGFUSE:
-        conversations_and_messages_of_user_per_day(lf_df_small, user_id, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION, LF_COLUMN_NAME_MESSAGE)
-elif choice == "4":
-    if ANALYZE_EXCEL:
-        # batch_size = 10
-        batch_size = 3
-        classify_messages_by_LLM(excel_df, messages_log_file, None, batch_size)
-    if ANALYZE_LANGFUSE:
-        #batch_size = 3
-        batch_size = None
-        classify_messages_by_LLM(lf_df_small, None, pickle_file_name, batch_size, LF_COLUMN_NAME_MESSAGE)
-elif choice == "5":
-    #excluded_user_ids = ["68c93b60279c6a9faf4683f3", "68c3d7a0599baa89eb48bc00", "68c3d7b1f2978f6b2a432235", "68c3d7ec41aa5e1af33e8d90", "68da33f9a8926c6d7d2e6009", "68c828cf66b3bfa761af5b77"]
-    #excluded_user_ids = ["68c93b60279c6a9faf4683f3"]
-    excluded_user_ids = ["68c3d92641aa5e1af33e9374"] # Test User of Lena
+for choice in sorted(choices):
+    log.info(f"\n--- Running function {choice} ---")
 
-    if ANALYZE_EXCEL:
-        display_classification_results(excel_df, excluded_user_ids)
-        #display_classification_results(excel_df)
-    if ANALYZE_LANGFUSE:
-        pickle_df = pd.read_pickle(pickle_file_name)
-        display_classification_results(pickle_df, excluded_user_ids, LF_COLUMN_NAME_USER_ID)
-else: 
-    log.error("Invalid choice, please make sure to enter a number between 1 to 5!")
+    if choice == "1":
+        top_k = 20
+        #top_k = number_of_unique_users
+        if ANALYZE_EXCEL:
+            ranking_by_conversations_and_messages_by_user(excel_df, top_k)
+        if ANALYZE_LANGFUSE:
+            ranking_by_conversations_and_messages_by_user(lf_df_small, top_k, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION)
+
+    elif choice == "2":
+        if ANALYZE_EXCEL:
+            conversations_and_messages_per_day(excel_df)
+        if ANALYZE_LANGFUSE:
+            conversations_and_messages_per_day(lf_df_small, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_CONVERSATION)
+
+    elif choice == "3":
+        if ANALYZE_EXCEL:
+            conversations_and_messages_of_user_per_day(excel_df, user_id)
+        if ANALYZE_LANGFUSE:
+            conversations_and_messages_of_user_per_day(lf_df_small, user_id, LF_COLUMN_NAME_DATE, LF_COLUMN_NAME_USER_ID, LF_COLUMN_NAME_CONVERSATION, LF_COLUMN_NAME_MESSAGE)
+
+    elif choice == "4":
+        if ANALYZE_EXCEL:
+            batch_size = 3
+            classify_messages_by_LLM(excel_df, messages_log_file, None, batch_size)
+        if ANALYZE_LANGFUSE:
+            batch_size = None
+            classify_messages_by_LLM(lf_df_small, None, pickle_file_name, batch_size, LF_COLUMN_NAME_MESSAGE)
+
+    elif choice == "5":
+        excluded_user_ids = ["68c3d92641aa5e1af33e9374"]  # Test User of Lena
+        if ANALYZE_EXCEL:
+            display_classification_results(excel_df, excluded_user_ids)
+        if ANALYZE_LANGFUSE:
+            pickle_df = pd.read_pickle(pickle_file_name)
+            display_classification_results(pickle_df, excluded_user_ids, LF_COLUMN_NAME_USER_ID)
