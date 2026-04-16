@@ -266,7 +266,6 @@ if ANALYZE_LANGFUSE:
 #user_id = "68c3d7ec41aa5e1af33e8d90" # 218 messages and 40 conversations during the period Sept 11 to Oct 20
 #user_id = "68da33f9a8926c6d7d2e6009" # 195 messages and 14 conversations during the period Sept 11 to Oct 20
 #user_id = "68c828cf66b3bfa761af5b77" # 188 messages and 47 conversations during the period Sept 11 to Oct 20
-# Wie viele Credits bekommt man als Entschädigung für ein Tutotat?
 user_id = "691ae6fb9653e3d85b29067f" # Michael
 #user_id = "68c3d813f2978f6b2a432e6f" # TODO: Which user is this?
 #user_id = "68c3d92641aa5e1af33e9374" # Test User of Lena
