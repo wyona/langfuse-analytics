@@ -2,3 +2,4 @@
 langfuse_traces.csv
 venv
 .env
+__pycache__
